@@ -68,12 +68,14 @@ class QueueSim:
         self._sleep = None
         self._jobs = []
         self._job_length = 30
+        self.n_gets = 0
 
     def start(self, sleep):
         self._sleep = sleep
         sleep(1, self._drop)
 
     def get_job(self):
+        self.n_gets += 1
         if self._jobs:
             return self._jobs.pop()
 
@@ -94,6 +96,25 @@ class ExistingAlgorithm:
         return 1
 
 
+class HalveLastAlgorithm:
+    def __call__(self, got_job):
+        if got_job:
+            return 0.5
+        return 1
+
+
+class DoubleDelayed:
+    def __init__(self):
+        self._found_last = False
+
+    def __call__(self, got_job):
+        last2 = got_job and self.found_last
+        self.found_last = got_job
+        if last2:
+            return 0.5
+        return 1
+
+
 class EvenAlgorithm:
     def __call__(self, got_job):
         return 1
@@ -109,7 +130,13 @@ class BalancedAlgorithm:
         return 0.5 + (self.worker.n_jobs/self.worker._max)
 
 
-for algorithm in (ExistingAlgorithm, EvenAlgorithm, BalancedAlgorithm):
+class StepBalanceAlgorithm:
+    def __call__(self, got_job):
+        v = 0.5 if got_job else 1
+        return v * (1 + (self.worker.n_jobs/self.worker._max))
+
+
+for algorithm in (ExistingAlgorithm, EvenAlgorithm, HalveLastAlgorithm, DoubleDelayed, BalancedAlgorithm, StepBalanceAlgorithm):
     print(algorithm.__name__)
     queue = QueueSim()
     algorithms = [algorithm() for _ in range(n_workers)]
@@ -125,6 +152,7 @@ for algorithm in (ExistingAlgorithm, EvenAlgorithm, BalancedAlgorithm):
         def summarise(self):
             print('Wasted time:', self.wasted_time)
             print('Average range:', self.range_time / (s.time - 1))
+            print('Queue gets:', queue.n_gets)
 
         def sample(self, start, end):
             delta_t = end - start
@@ -139,5 +167,5 @@ for algorithm in (ExistingAlgorithm, EvenAlgorithm, BalancedAlgorithm):
     queue.start(s.sleep)
     for worker in workers:
         worker.start(s.sleep, random.random())
-    s.run_for(10000)
+    s.run_for(15000)
     sampler.summarise()
