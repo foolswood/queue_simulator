@@ -1,0 +1,34 @@
+\documentclass{article}
+
+\begin{document}
+
+Assume each worker has no slot limit.
+Assume worker synchronisation is randomly distributed.
+Assume execution much slower than pickup (e.g. decay ignored).
+Investigate the effect of the ratio of switching times on:
+\begin{enumerate}
+\item Time to empty queue
+\item Balance between workers
+\end{enumerate}
+Fix no work poll interval to 1.
+With these algorithms workers take an average of half a second to discover work has been queued.
+
+The average time before any worker notices queued work is:
+\begin{equation}
+\frac{1}{w}
+\end{equation}
+
+The average time one worker takes to empty a queue of $l$ items is:
+\begin{equation}
+0.5 + \frac{l - 2}{n}
+\end{equation}
+
+Once switched each worker pulls work at a rate of n per second until the queue is empty.
+Therefore the emptying rate (once all workers are engaged) is $nw$ (where $w$ is no of workers).
+Because the first one will be next to pull again we don't have to worry about the others.
+Once the first switches the probability that all workers will switch before it pulls work again is:
+\begin{equation}
+\frac{1}{n}^{w - 1}
+\end{equation}
+
+\end{document}
